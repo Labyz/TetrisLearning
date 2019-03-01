@@ -234,7 +234,7 @@ class TetrisApp(object):
                 self.run_one_round()
                 self.react_to_event()
         else:
-            for i in range(n):
+            for _ in range(n):
                 self.run_one_round()
                 self.react_to_event()
 
