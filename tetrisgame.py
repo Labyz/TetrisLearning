@@ -3,39 +3,41 @@ import random
 import sys
 
 shapes = [
-    [[1],
-     [1],
-     [1],
-     [1]],
+    [[1,1,1,1]],
 
     [[2,2],
      [2,2]],
 
-    [[3,3,3],
-     [0,3,0]],
+    [[0,3,0],
+     [3,3,3],
+     [0,0,0]],
 
     [[4,4,0],
-     [0,4,4]],
+     [0,4,4],
+     [0,0,0]],
 
     [[0,5,5],
-     [5,5,0]],
+     [5,5,0],
+     [0,0,0]],
 
-    [[6,6,6],
-     [6,0,0]],
+    [[0,0,0],
+     [0,0,6],
+     [6,6,6]],
 
-    [[7,7,7],
-     [0,0,7]],
+    [[0,0,0],
+     [0,0,7],
+     [7,7,7]],
 ]
 
 colors = [
-    (0, 0, 0),
+    (0,0,0),
+    (0, 255, 255),
+    (255, 255, 0),
+    (128, 0, 128),
     (255, 0, 0),
     (0, 255, 0),
-    (0, 0, 255),
-    (255, 120, 0),
-    (255, 255, 0),
-    (120, 0, 255),
-    (0, 120, 255)
+    (255, 165, 0),
+    (0, 0, 255)
 ]
 
 # TODO: enable user to scale the tetris board
@@ -44,12 +46,14 @@ class TetrisApp(object):
 
     def __init__(self, w=10, h=24):
         pygame.init()
+        self.w = w
+        self.h = h
         self.width = 20 * w
         self.height = 20 * h
         self.screen = pygame.display.set_mode((2 * self.width, self.height))
         pygame.key.set_repeat(250, 25)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
-        self.board = [[0 for x in range(10)] for y in range(24)]
+        self.board = [[0 for x in range(self.w)] for y in range(self.h)]
         self.new_tetromino()
         self.hold_tetromino = 0
         self.perdu = False
@@ -78,12 +82,13 @@ class TetrisApp(object):
                         self.board[self.y + y][self.x + x] = val
             counter, trou = [], False
             for y in range(len(self.tetromino)):
-                trou = True
-                for i in range(10):
-                    if not self.board[y+self.y][i]:
-                        trou = False
-                if trou:
-                    counter.append(y+self.y)
+                if len(self.board) > self.y+y:
+                    trou = True
+                    for i in range(10):
+                        if not self.board[y+self.y][i]:
+                            trou = False
+                    if trou:
+                        counter.append(y+self.y)
             if counter == []:
                 self.combo = 0
             else:
@@ -141,15 +146,19 @@ class TetrisApp(object):
 
 
     def moveright(self):
-        if(self.x < 9):
+        if(self.x < self.w):
             if (not self.collision_tetromino(self.tetromino,self.x+1,self.y)):
                 self.x +=1
 
     def new_tetromino(self):
-        self.tetromino = shapes[random.randint(0,6)]
-        self.y = 0
-        self.x = 4
-        if(self.board[0][4] or self.board[0][5] or self.board[0][6]):
+        rint = random.randint(0,6)
+        self.tetromino = shapes[rint]
+        if(rint ==5 or rint ==6):
+            self.y = -1
+        else:
+            self.y=0
+        self.x = int(self.w / 2)
+        if(self.board[0][int(self.w/2)-1] or self.board[0][int(self.w/2)] or self.board[0][int(self.w/2)+1]):
             print("Game Over")
             self.perdu = True
             self.score = 0
@@ -158,7 +167,7 @@ class TetrisApp(object):
         # print("ancien board ")
         # print(self.board)
         ancienne_board = self.board.copy()
-        self.board = [[0 for x in range( 10 )]] + [[ancienne_board[y][x] for x in range(10)] for y in range(ty)] + [[ancienne_board[y][x] for x in range(10)] for y in range(ty+1,24)]
+        self.board = [[0 for x in range( self.w )]] + [[ancienne_board[y][x] for x in range(self.w)] for y in range(ty)] + [[ancienne_board[y][x] for x in range(self.w)] for y in range(ty+1,self.h)]
         # print(" nouveau board ")
         # print(self.board)
 
@@ -182,31 +191,31 @@ class TetrisApp(object):
         msg_score = pygame.font.Font(
             pygame.font.get_default_font(), 12).render(
             "Score: "+str(self.score), False, (255, 255, 255), (0, 0, 0))
-        self.screen.blit(msg_score, (20*13, 20*7))
+        self.screen.blit(msg_score, (self.width + 20 * 3, 20*7))
         msg_combo = pygame.font.Font(
             pygame.font.get_default_font(), 12).render(
             "Combo: x" + str(self.combo), False, (255, 255, 255), (0, 0, 0))
-        self.screen.blit(msg_combo, (20 * 13, 20 * 8))
+        self.screen.blit(msg_combo, (self.width + 20 * 3, 20 * 8))
         msg_hold = pygame.font.Font(
             pygame.font.get_default_font(), 12).render(
             "Tetromino tenu", False, (255, 255, 255), (0, 0, 0))
-        self.screen.blit(msg_hold, (20 * 13, 20 * 1))
+        self.screen.blit(msg_hold, (self.width + 20 * 3, 20 * 1))
         for y, row in enumerate(self.board):
             pygame.draw.line(self.screen, (255, 255, 255),
-                                (0, y * 20), (10 * 20, y * 20))
+                                (0, y * 20), (self.width, y * 20))
             for x, val in enumerate(row):
                 if y == 0:
                     pygame.draw.line(
-                        self.screen, (255, 255, 255), (x * 20, 0), (x * 20, 24 * 20))
+                        self.screen, (255, 255, 255), (x * 20, 0), (x * 20, self.height))
                 if val:
                     pygame.draw.rect(
                         self.screen,
                         colors[val],
                         pygame.Rect(x * 20, y * 20, 20, 20), 0)
         pygame.draw.line(self.screen, (255, 255, 255),
-                            (0, 24 * 20 - 1), (10 * 20, 24 * 20 - 1))
+                            (0, self.height - 1), (self.width, self.height - 1))
         pygame.draw.line(self.screen, (255, 255, 255),
-                            (10 * 20, 0), (10 * 20, 24 * 20))
+                            (self.width, 0), (self.width, self.height))
         for y, row in enumerate(self.tetromino):
             for x, val in enumerate(row):
                 if val:
@@ -221,7 +230,7 @@ class TetrisApp(object):
                         pygame.draw.rect(
                             self.screen,
                             colors[val],
-                            pygame.Rect((13+x) * 20, (2+y) * 20, 20, 20), 0)
+                            pygame.Rect((self.w+3+x) * 20, (2+y) * 20, 20, 20), 0)
         pygame.display.update()
 
         #Gestion des contrôles
@@ -238,5 +247,6 @@ class TetrisApp(object):
                 self.run_one_round()
                 self.react_to_event()
 
-# App = TetrisApp()
-# App.run()
+App = TetrisApp(w=15,h=29)
+#App = TetrisApp()
+App.run()
