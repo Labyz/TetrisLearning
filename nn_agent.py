@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 from tetrisgame import TetrisApp
 from pygame.constants import K_UP, K_LEFT, K_RIGHT, K_DOWN
-from keras.models import Sequential
+from keras.models import Sequential, model_from_json
 from keras.layers import InputLayer, Dense
 
 a = -0.51
@@ -11,13 +11,13 @@ c = -0.36
 d = -0.18
 
 class NN_agent():
-    def __init__(self):
-        self.game = TetrisApp()
+    def __init__(self, w=10, h=24):
+        self.game = TetrisApp(w, h)
 
         # epsilon-greedy Q learning algorithm inspired by https://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/
         self.model = Sequential()
-        self.model.add(InputLayer(batch_input_shape=(1,6)))
-        self.model.add(Dense(4, activation='relu'))
+        # self.model.add(InputLayer(batch_input_shape=(1,6)))
+        self.model.add(Dense(4, input_shape=(6,), activation='relu'))
         self.model.compile(loss='mse', optimizer='adam', metrics=['mae'])
         self.y = 0.95
         self.eps = 0.5
@@ -35,6 +35,24 @@ class NN_agent():
                 if self.game.perdu == True:
                     self.game.reset()
                 self.run_one_iteration()
+
+    def save(self):
+        model_json = self.model.to_json()
+        with open("model.json", "w") as json_file:
+            json_file.write(model_json)
+        # serialize weights to HDF5
+        self.model.save_weights("model.h5")
+        print("Saved model to disk")
+
+    def load(self):
+        json_file = open('model.json', 'r')
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.model = model_from_json(loaded_model_json)
+        # load weights into new model
+        self.model.load_weights("model.h5")
+        print("Loaded model from disk")
+        self.model.compile(loss='mse', optimizer='adam', metrics=['mae'])
 
     def run_one_iteration(self):
         score = self.game.score
@@ -70,6 +88,8 @@ class NN_agent():
         event = pygame.event.Event(pygame.KEYDOWN, {"key" : self.keys[a]})
         return (event)
 
-player = NN_agent()
-player.start()
+player = NN_agent(8, 10)
+player.load()
+player.start(1000)
+player.save()
 

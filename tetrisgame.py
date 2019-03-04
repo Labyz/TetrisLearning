@@ -101,7 +101,7 @@ class TetrisApp(object):
             for y in range(len(self.tetromino)):
                 if len(self.board) > self.y+y:
                     trou = True
-                    for i in range(10):
+                    for i in range(self.w):
                         if not self.board[y+self.y][i]:
                             trou = False
                     if trou:
