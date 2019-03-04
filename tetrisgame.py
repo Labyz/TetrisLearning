@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import numpy as np
 
 shapes = [
     [[1,1,1,1]],
@@ -25,7 +26,7 @@ shapes = [
      [6,6,6]],
 
     [[0,0,0],
-     [0,0,7],
+     [7,0,0],
      [7,7,7]],
 ]
 
@@ -40,7 +41,7 @@ colors = [
     (0, 0, 255)
 ]
 
-# TODO: enable user to scale the tetris board
+# DONE: enable user to scale the tetris board
 
 class TetrisApp(object):
 
@@ -54,6 +55,7 @@ class TetrisApp(object):
         pygame.key.set_repeat(250, 25)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
         self.board = [[0 for x in range(self.w)] for y in range(self.h)]
+        self.permutation = []
         self.new_tetromino()
         self.hold_tetromino = 0
         self.perdu = False
@@ -67,9 +69,24 @@ class TetrisApp(object):
             'pygame.K_LSHIFT': self.retenir_tetromino
         }
         self.clock = pygame.time.Clock()
+        self.total_height = 0
+        self.holes = 0
+        self.bumpiness = 0
 
         #set up a drop every 500ms
         pygame.time.set_timer(pygame.USEREVENT + 1, 500)
+
+    def reset(self):
+        self.board = [[0 for x in range(self.w)] for y in range(self.h)]
+        self.new_tetromino()
+        self.hold_tetromino = 0
+        self.perdu = False
+        self.score = 0
+        self.combo = 0
+        self.total_height = 0
+        self.holes = 0
+        self.bumpiness = 0
+        self.permutation = []
 
     def descente(self):
         self.y += 1
@@ -104,6 +121,7 @@ class TetrisApp(object):
                 self.score += self.combo * 1200
             for i,y in enumerate(counter):
                 self.retirer_ligne(y)
+            
 
             #nouveau tetromino en haut
             self.new_tetromino()
@@ -151,7 +169,9 @@ class TetrisApp(object):
                 self.x +=1
 
     def new_tetromino(self):
-        rint = random.randint(0,6)
+        if len(self.permutation) == 0:
+            self.permutation=np.random.permutation(7).tolist()
+        rint = self.permutation.pop()
         self.tetromino = shapes[rint]
         if(rint ==5 or rint ==6):
             self.y = -1
@@ -161,7 +181,6 @@ class TetrisApp(object):
         if(self.board[0][int(self.w/2)-1] or self.board[0][int(self.w/2)] or self.board[0][int(self.w/2)+1]):
             print("Game Over")
             self.perdu = True
-            self.score = 0
 
     def retirer_ligne(self,ty):
         # print("ancien board ")
@@ -247,6 +266,6 @@ class TetrisApp(object):
                 self.run_one_round()
                 self.react_to_event()
 
-App = TetrisApp(w=15,h=29)
-#App = TetrisApp()
+# App = TetrisApp(w=15,h=29)
+App = TetrisApp()
 App.run()
