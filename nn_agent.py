@@ -5,13 +5,18 @@ from pygame.constants import K_UP, K_LEFT, K_RIGHT, K_DOWN
 from keras.models import Sequential
 from keras.layers import InputLayer, Dense
 
+a = -0.51
+b = 0.019
+c = -0.36
+d = -0.18
+
 class NN_agent():
     def __init__(self):
         self.game = TetrisApp()
 
         # epsilon-greedy Q learning algorithm inspired by https://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/
         self.model = Sequential()
-        self.model.add(InputLayer(batch_input_shape=(1,2)))
+        self.model.add(InputLayer(batch_input_shape=(1,6)))
         self.model.add(Dense(4, activation='relu'))
         self.model.compile(loss='mse', optimizer='adam', metrics=['mae'])
         self.y = 0.95
@@ -33,18 +38,33 @@ class NN_agent():
 
     def run_one_iteration(self):
         score = self.game.score
-        combo = self.game.combo
+        # combo = self.game.combo
+        height = self.game.total_height
+        bumpiness = self.game.bumpiness
+        holes = self.game.holes
+        tid = self.game.tetromino_id
+        rid = self.game.rotation_id
         self.eps *= self.decay_factor
+
+        # epsilon-greedy exploration
         if np.random.random() < self.eps:
             a = np.random.randint(0, 4)
         else:
-            a = np.argmax(self.model.predict(np.array([[score, combo]])))
+            a = np.argmax(self.model.predict(np.array([[height, score, holes, bumpiness, tid, rid]])))
         pygame.event.post(self.press_key(a))
+        
+        # to speed up the process
+        for _ in range(5):
+            pygame.event.post(self.press_key(3))
+
+        # run one round
         self.game.run(1)
-        target = (self.game.score-score) + self.y * np.max(self.model.predict(np.array([[self.game.score, self.game.combo]])))
-        target_vec = self.model.predict(np.array([[score, combo]]))[0]
+
+        # Q learning
+        target = a * (self.game.height - height) + b * (self.game.score - score) + c * (self.game.holes - holes) + d * (self.game.bumpiness - bumpiness) + self.y * np.max(self.model.predict(np.array([[self.game.height, self.game.score, self.game.holes, self.game.bumpiness, self.game.tetromino_id, self.game.rotation_id]])))
+        target_vec = self.model.predict(np.array([[height, score, holes, bumpiness, tid, rid]]))[0]
         target_vec[a] = target
-        self.model.fit(np.array([[score, combo]]), target_vec.reshape(-1, 4), epochs=1, verbose=0)
+        self.model.fit(np.array([[height, score, holes, bumpiness, tid, rid]]), target_vec.reshape(-1, 4), epochs=1, verbose=0)
 
     def press_key(self, a):
         event = pygame.event.Event(pygame.KEYDOWN, {"key" : self.keys[a]})

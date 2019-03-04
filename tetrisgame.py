@@ -122,6 +122,19 @@ class TetrisApp(object):
             for i,y in enumerate(counter):
                 self.retirer_ligne(y)
             
+            self.total_height = 0
+            self.bumpiness = 0
+            self.holes = 0
+            for j in range(self.w):
+                column = np.array(self.board)[:,j]
+                blocks = np.nonzero(np.array(self.board)[:,j])[0].tolist()
+                blocks.append(self.h)
+                column_height = self.h - blocks[0]
+                self.total_height += column_height
+                self.holes += column_height - (len(blocks) - 1)
+                if j != 0:
+                    self.bumpiness += np.abs(prev_blocks[0] - blocks[0])
+                prev_blocks = blocks
 
             #nouveau tetromino en haut
             self.new_tetromino()
@@ -135,7 +148,7 @@ class TetrisApp(object):
             self.new_tetromino()
         else:
             self.hold_tetromino, self.tetromino = self.tetromino, self.hold_tetromino
-            self.x = 4
+            self.x = int(self.w / 2)
             self.y = 0
 
 
@@ -144,6 +157,8 @@ class TetrisApp(object):
         # print(new_tetro)
         if not self.collision_tetromino(new_tetro,self.x,self.y):
             self.tetromino = new_tetro
+        self.rotation_id += 1
+        self.rotation_id %= 4
 
     def collision_tetromino(self,tetro,x,y):
         for tetroy, row in enumerate(tetro):
@@ -172,6 +187,8 @@ class TetrisApp(object):
         if len(self.permutation) == 0:
             self.permutation=np.random.permutation(7).tolist()
         rint = self.permutation.pop()
+        self.tetromino_id = rint
+        self.rotation_id = 0
         self.tetromino = shapes[rint]
         if(rint ==5 or rint ==6):
             self.y = -1
@@ -267,5 +284,5 @@ class TetrisApp(object):
                 self.react_to_event()
 
 # App = TetrisApp(w=15,h=29)
-App = TetrisApp()
-App.run()
+# App = TetrisApp()
+# App.run()
