@@ -10,23 +10,18 @@ shapes = [
      [2,2]],
 
     [[0,3,0],
-     [3,3,3],
-     [0,0,0]],
+     [3,3,3]],
 
     [[4,4,0],
-     [0,4,4],
-     [0,0,0]],
+     [0,4,4]],
 
     [[0,5,5],
-     [5,5,0],
-     [0,0,0]],
+     [5,5,0]],
 
-    [[0,0,0],
-     [0,0,6],
+    [[0,0,6],
      [6,6,6]],
 
-    [[0,0,0],
-     [7,0,0],
+    [[7,0,0],
      [7,7,7]],
 ]
 
@@ -88,7 +83,7 @@ class TetrisApp(object):
         self.bumpiness = 0
         self.permutation = []
 
-    def descente(self):
+    def descente(self, simulation = False):
         self.y += 1
         if self.collision_tetromino(self.tetromino,self.x,self.y):
             self.y -= 1
@@ -141,6 +136,57 @@ class TetrisApp(object):
             # print(self.tetromino)
 
             #check lignes
+    
+    def simulate_descent(self):
+        y_sim = self.y
+        while not self.collision_tetromino(self.tetromino, self.x, y_sim):
+            y_sim += 1
+        y_sim -= 1
+        board_sim = self.board.copy()
+        #on ajoute le tetromino au board actuel
+        for y, row in enumerate(self.tetromino):
+            for x, val in enumerate(row):
+                if val:
+                    board_sim[y_sim + y][self.x + x] = val
+        counter, trou = [], False
+        for y in range(len(self.tetromino)):
+            if len(self.board) > self.y+y:
+                trou = True
+                for i in range(self.w):
+                    if not self.board[y+self.y][i]:
+                        trou = False
+                if trou:
+                    counter.append(y+self.y)
+        if counter == []:
+            self.combo = 0
+        else:
+            self.combo += 1
+        i = len(counter)
+        if i == 1:
+            self.score += self.combo * 40
+        if i == 2:
+            self.score += self.combo * 100
+        if i == 3:
+            self.score += self.combo * 300
+        if i > 3:
+            self.score += self.combo * 1200
+        for i,y in enumerate(counter):
+            self.retirer_ligne(y)
+        
+        self.total_height = 0
+        self.bumpiness = 0
+        self.holes = 0
+        for j in range(self.w):
+            column = np.array(self.board)[:,j]
+            blocks = np.nonzero(np.array(self.board)[:,j])[0].tolist()
+            blocks.append(self.h)
+            column_height = self.h - blocks[0]
+            self.total_height += column_height
+            self.holes += column_height - (len(blocks) - 1)
+            if j != 0:
+                self.bumpiness += np.abs(prev_blocks[0] - blocks[0])
+            prev_blocks = blocks
+
 
     def retenir_tetromino(self):
         if self.hold_tetromino == 0:
@@ -184,16 +230,18 @@ class TetrisApp(object):
                 self.x +=1
 
     def new_tetromino(self):
+        ''' returns a tetromino '''
         if len(self.permutation) == 0:
             self.permutation=np.random.permutation(7).tolist()
         rint = self.permutation.pop()
         self.tetromino_id = rint
         self.rotation_id = 0
         self.tetromino = shapes[rint]
-        if(rint ==5 or rint ==6):
-            self.y = -1
-        else:
-            self.y=0
+        # if(rint ==5 or rint ==6):
+        #     self.y = -1
+        # else:
+        #     self.y=0
+        self.y=0
         self.x = int(self.w / 2)
         if(self.board[0][int(self.w/2)-1] or self.board[0][int(self.w/2)] or self.board[0][int(self.w/2)+1]):
             print("Game Over")
@@ -284,5 +332,5 @@ class TetrisApp(object):
                 self.react_to_event()
 
 # App = TetrisApp(w=15,h=29)
-# App = TetrisApp()
-# App.run()
+App = TetrisApp()
+App.run()

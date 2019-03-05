@@ -6,7 +6,7 @@ from keras.models import Sequential, model_from_json
 from keras.layers import InputLayer, Dense
 
 a = -0.51
-b = 0.019
+b = 0.019 # 0.76 / 40
 c = -0.36
 d = -0.18
 
@@ -80,8 +80,11 @@ class NN_agent():
 
         # Q learning
         target = a * (self.game.height - height) + b * (self.game.score - score) + c * (self.game.holes - holes) + d * (self.game.bumpiness - bumpiness) + self.y * np.max(self.model.predict(np.array([[self.game.height, self.game.score, self.game.holes, self.game.bumpiness, self.game.tetromino_id, self.game.rotation_id]])))
+
         target_vec = self.model.predict(np.array([[height, score, holes, bumpiness, tid, rid]]))[0]
+
         target_vec[a] = target
+
         self.model.fit(np.array([[height, score, holes, bumpiness, tid, rid]]), target_vec.reshape(-1, 4), epochs=1, verbose=0)
 
     def press_key(self, a):
