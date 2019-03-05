@@ -153,17 +153,27 @@ class TetrisApp(object):
             #nouveau tetromino en haut
             self.new_tetromino()
 
+
+    def simple_board(self):
+        ''' returns the board with 0 or 1 instead of digits '''
+        board = np.copy(self.board)
+        for i in range(self.h):
+            for j in range(self.w):
+                if board[i][j] != 0:
+                    board[i][j] = 1
+        return(board)
+
     
     def simulate_descent(self, tetromino_sim, x_sim):
         ''' simule la descente du tetromino '''
         combo = self.combo
-        score = self.score
-        column_heights = self.column_heights.copy()
+        lines = self.lines
+        column_heights = np.copy(self.column_heights)
         y_sim = self.y
         while not self.collision_tetromino(tetromino_sim, x_sim, y_sim):
             y_sim += 1
         y_sim -= 1
-        board_sim = self.board.copy()
+        board_sim = np.copy(self.board)
         #on ajoute le tetromino au board actuel
         for y, row in enumerate(tetromino_sim):
             for x, val in enumerate(row):
@@ -183,14 +193,7 @@ class TetrisApp(object):
         else:
             combo += 1
         i = len(counter)
-        if i == 1:
-            score += combo * 40
-        if i == 2:
-            score += combo * 100
-        if i == 3:
-            score += combo * 300
-        if i > 3:
-            score += combo * 1200
+        lines += i
         for i,y in enumerate(counter):
             board_sim = self.retirer_ligne(y, board_sim)
         
@@ -208,7 +211,7 @@ class TetrisApp(object):
             if j != 0:
                 bumpiness += np.abs(prev_blocks[0] - blocks[0])
             prev_blocks = blocks
-        return([total_height, score, holes, bumpiness, column_heights])
+        return([total_height, lines, holes, bumpiness, column_heights])
 
 
     def retenir_tetromino(self):
@@ -228,6 +231,11 @@ class TetrisApp(object):
             self.tetromino = new_tetro
         self.rotation_id += 1
         self.rotation_id %= 4
+
+
+    def get_rotated_tetromino(self):
+        new_tetro = [[self.tetromino[y][x] for y in range(len(self.tetromino))] for x in range(len(self.tetromino[0])- 1, -1, -1)]
+        return(new_tetro)
 
 
     def collision_tetromino(self,tetro,x,y):
@@ -277,7 +285,7 @@ class TetrisApp(object):
         ''' 
             renvoie le tableau avec la ligne d'ordonnée ty supprimée 
         '''
-        ancien_board = tboard.copy()
+        ancien_board = np.copy(tboard)
         tboard = [[0 for x in range( self.w )]] + [[ancien_board[y][x] for x in range(self.w)] for y in range(ty)] + [[ancien_board[y][x] for x in range(self.w)] for y in range(ty+1,self.h)]
         print('Success!')
         return(tboard)
