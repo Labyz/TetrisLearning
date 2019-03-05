@@ -159,7 +159,7 @@ class NN_agent():
         event = pygame.event.event(pygame.keydown, {"key" : self.keys[a]})
         return (event)
 
-player = nn_agent(assisted=true)
+player = NN_agent(assisted=True)
 name = "assisted, eps=0"
 player.eps=0
 player.start(1000)
