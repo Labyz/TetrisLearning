@@ -156,7 +156,7 @@ class NN_agent():
         self.model.fit(old_input, target_vec.reshape(-1, self.output_size), epochs=1, verbose=0)
 
     def press_key(self, a):
-        event = pygame.event.event(pygame.keydown, {"key" : self.keys[a]})
+        event = pygame.event.Event(pygame.KEYDOWN, {"key" : self.keys[a]})
         return (event)
 
 player = NN_agent(assisted=True)
