@@ -11,7 +11,7 @@ C = -0.36
 D = -0.18
 
 class NN_agent():
-    def __init__(self, w=10, h=24):
+    def __init__(self, w=10, h=24, eps=0.5, assisted = False):
         self.game = TetrisApp(w, h)
         self.w = w
         self.h = h
@@ -24,9 +24,10 @@ class NN_agent():
         self.model.add(Dense(self.output_size, input_shape=(self.input_size,), activation='relu'))
         self.model.compile(loss='mse', optimizer='adam', metrics=['mae'])
         self.y = 0.95
-        self.eps = 0.5
+        self.eps = eps
         self.decay_factor = 0.9999
         self.keys = [K_LEFT, K_RIGHT, K_DOWN, K_UP]
+        self.assisted = assisted
 
     def start(self, n=100):
         if (n==0):
@@ -58,9 +59,33 @@ class NN_agent():
         print("Loaded model from disk")
         self.model.compile(loss='mse', optimizer='adam', metrics=['mae'])
 
+
+    def find_best_move(self):
+        best_reward = 0
+        best_move = 0
+        for a in range(self.output_size):
+            rotation = a // self.w
+            if rotation % 2 == 0:
+                tetro = self.game.tetromino
+            else:
+                tetro = self.game.get_rotated_tetromino()
+            margin = np.array(tetro).shape[1]
+            x_position = np.minimum(a % self.w, self.w - margin)
+            results = self.game.simulate_descent(tetro, x_position)
+            reward = A * (results[0]) + B * (results[1]) + C * (results[2]) + D * (results[3]) 
+            if a == 0:
+                best_reward = reward
+                best_move = a
+            else:
+                if reward > best_reward:
+                    best_reward = reward
+                    best_move = a
+        return(best_move)
+
+
     def run_one_iteration(self):
         lines = self.game.lines
-        # score = self.game.score
+        score = self.game.score
         # combo = self.game.combo
         height = self.game.total_height
         column_heights = self.game.column_heights
@@ -75,7 +100,10 @@ class NN_agent():
         if np.random.random() < self.eps:
             a = np.random.randint(0, self.output_size)
         else:
-            a = np.argmax(self.model.predict(old_input))
+            if self.assisted:
+                a = self.find_best_move()
+            else:
+                a = np.argmax(self.model.predict(old_input))
         rotation = a // self.w
         # if rotation % 2 == 0:
         #     margin = np.array(self.game.tetromino).shape[1]
@@ -106,9 +134,13 @@ class NN_agent():
 
         # reward = A * (self.game.height - height) + B * (self.game.lines - lines) + C * (self.game.holes - holes) + D * (self.game.bumpiness - bumpiness) + self.y * np.max(self.model.predict(new_input))
 
-        reward = A * (self.game.height) + B * (self.game.lines) + C * (self.game.holes) + D * (self.game.bumpiness) 
+        reward = A * (self.game.height) + B * (self.game.score/40) + C * (self.game.holes) + D * (self.game.bumpiness) 
 
         target = reward + self.y * np.max(self.model.predict(new_input))
+
+        # print("---")
+        # print(reward)
+        # print(target)
 
         # print("---")
         # print(self.game.height)
@@ -124,11 +156,12 @@ class NN_agent():
         self.model.fit(old_input, target_vec.reshape(-1, self.output_size), epochs=1, verbose=0)
 
     def press_key(self, a):
-        event = pygame.event.Event(pygame.KEYDOWN, {"key" : self.keys[a]})
+        event = pygame.event.event(pygame.keydown, {"key" : self.keys[a]})
         return (event)
 
-player = NN_agent()
-name = "1"
+player = nn_agent(assisted=true)
+name = "assisted, eps=0"
+player.eps=0
 player.start(1000)
 player.save(name)
 while(True):
