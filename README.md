@@ -4,7 +4,6 @@ A custom Tetris game and the implementation of an AI solving it.
 ## Python modules required
 - `numpy`
 - `pygame`
-- `random`
 - `sys`
 - `keras`
 
@@ -14,5 +13,5 @@ A custom Tetris game and the implementation of an AI solving it.
 - The file `cnn_agent.py` implements a convolutional neural network which plays the game and learns from its actions.
 
 ## How to run
-You can test the program yourself by running `python run_cnn_agent.py` in a terminal at the root of this repository.
+You can test the program yourself by running `python run_cnn_agent.py` in a terminal at the root of this repository.  
 You can modify the parameters of the agent by editing the same file.
