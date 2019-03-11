@@ -207,14 +207,3 @@ class CNN_agent():
     def press_key(self, a):
         event = pygame.event.Event(pygame.KEYDOWN, {"key" : self.keys[a]})
         return (event)
-
-# player = CNN_agent(eps = 0.8, assist_rate=0.8, decay_factor = 1)
-# name = "cnn_eps"+str(player.eps)+"_assist"+str(player.assist_rate)+"_decay"+str(player.decay_factor)
-# player.start(1000)
-# player.save(name)
-# while(True):
-#     player.load(name)
-#     player.start(1000)
-#     player.save(name)
-#     # print(player.eps)
-

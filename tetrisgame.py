@@ -1,5 +1,4 @@
 import pygame
-import random
 import sys
 import numpy as np
 
@@ -42,7 +41,7 @@ colors = [
 
 class TetrisApp(object):
 
-    def __init__(self, w=10, h=24):
+    def __init__(self, w=10, h=24, silent=False, verbose = True):
         pygame.init()
         self.w = w
         self.h = h
@@ -71,38 +70,44 @@ class TetrisApp(object):
         self.total_height = 0
         self.holes = 0
         self.bumpiness = 0
+        self.max_height = 0
+        self.silent = silent
+        self.verbose = verbose
 
         #set up a drop every 500ms
         pygame.time.set_timer(pygame.USEREVENT + 1, 500)
 
 
-    def reset(self):
-        self.board = [[0 for x in range(self.w)] for y in range(self.h)]
-        self.new_tetromino()
-        self.hold_tetromino = 0
-        self.perdu = False
-        self.score = 0
-        self.combo = 0
-        self.total_height = 0
-        self.holes = 0
-        self.bumpiness = 0
-        self.permutation = []
+    # def reset(self):
+    #     self.board = [[0 for x in range(self.w)] for y in range(self.h)]
+    #     self.new_tetromino()
+    #     self.hold_tetromino = 0
+    #     self.perdu = False
+    #     self.score = 0
+    #     self.combo = 0
+    #     self.total_height = 0
+    #     self.holes = 0
+    #     self.bumpiness = 0
+    #     self.permutation = []
+    #     self.lines=0
+    #     self.column_heights = np.zeros(self.w)
 
 
     def descente(self, complete = True):
         ''' fait descendre le tetromino jusqu'au haut de la pile '''
         collision = False
         if complete: 
-            while not self.collision_tetromino(self.tetromino,self.x,self.y):
+            while not self.collision_tetromino(self.tetromino,self.x,self.y+1):
                 self.y += 1
-                self.draw_screen()
-            self.y -= 1
+                if not self.silent:
+                    self.draw_screen()
+            # self.y -= 1
             collision = True
         else:
-            self.y += 1
-            if self.collision_tetromino(self.tetromino,self.x,self.y):
-                self.y -= 1
+            if self.collision_tetromino(self.tetromino,self.x,self.y+1):
                 collision = True
+            else:
+                self.y += 1
         if collision:
             #on ajoute le tetromino au board actuel
             for y, row in enumerate(self.tetromino):
@@ -133,6 +138,8 @@ class TetrisApp(object):
             if i > 3:
                 self.score += self.combo * 1200
             for i,y in enumerate(counter):
+                if self.verbose:
+                    print('Success! Combo =', self.combo)
                 self.board = self.retirer_ligne(y, self.board)
             
             self.total_height = 0
@@ -149,6 +156,7 @@ class TetrisApp(object):
                 if j != 0:
                     self.bumpiness += np.abs(prev_blocks[0] - blocks[0])
                 prev_blocks = blocks
+            self.max_height = np.max(self.column_heights)
 
             #nouveau tetromino en haut
             self.new_tetromino()
@@ -211,7 +219,8 @@ class TetrisApp(object):
             if j != 0:
                 bumpiness += np.abs(prev_blocks[0] - blocks[0])
             prev_blocks = blocks
-        return([total_height, lines, holes, bumpiness, column_heights])
+        max_height = np.max(self.column_heights)
+        return([total_height, lines, holes, bumpiness, max_height])
 
 
     def retenir_tetromino(self):
@@ -277,7 +286,9 @@ class TetrisApp(object):
         self.y=0
         self.x = int(self.w / 2)
         if(self.board[0][int(self.w/2)-1] or self.board[0][int(self.w/2)] or self.board[0][int(self.w/2)+1]):
-            print("Game Over")
+            if self.verbose:
+                print("Game Over")
+                print("Score =", self.score)
             self.perdu = True
 
 
@@ -287,7 +298,6 @@ class TetrisApp(object):
         '''
         ancien_board = np.copy(tboard)
         tboard = [[0 for x in range( self.w )]] + [[ancien_board[y][x] for x in range(self.w)] for y in range(ty)] + [[ancien_board[y][x] for x in range(self.w)] for y in range(ty+1,self.h)]
-        print('Success!')
         return(tboard)
 
 
@@ -354,17 +364,19 @@ class TetrisApp(object):
         pygame.display.update()
 
         #Gestion des contrôles
-        # self.clock.tick(60)
+        # self.clock.tick(20)
 
     def run(self, n=0):
         ''' runs n rounds, or runs indefinitely if n==0'''
         if (n==0):
             while not self.perdu:
-                self.draw_screen()
+                if not self.silent:
+                    self.draw_screen()
                 self.react_to_event()
         else:
             for _ in range(n):
-                self.draw_screen()
+                if not self.silent:
+                    self.draw_screen()
                 self.react_to_event()
 
 # App = TetrisApp(w=15,h=29)

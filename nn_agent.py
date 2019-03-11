@@ -80,6 +80,8 @@ class NN_agent():
                 if reward > best_reward:
                     best_reward = reward
                     best_move = a
+            # print(reward, a)
+        # print("best:", best_reward, best_move)
         return(best_move)
 
 
@@ -160,10 +162,10 @@ class NN_agent():
         return (event)
 
 player = NN_agent(assisted=True)
-name = "assisted, eps=0"
+name = "nn_assisted_eps0"
 player.eps=0
-player.start(1000)
-player.save(name)
+# player.start(1000)
+# player.save(name)
 while(True):
     player.load(name)
     player.start(1000)
