@@ -1,12 +1,12 @@
 from cnn_agent import CNN_agent
 
-w=10
-h=24
-lr = 0.8
-y = 0.95
-eps = 0.8
-assist_rate = 0.8
-decay_factor = 0.99
+w = 10
+h = 24
+lr = 0.8 # alpha
+y = 0.95 # gamma
+eps = 0.8 # probability of not predicting the next move
+assist_rate = 0.8 # probability that a non predicted-move is system-assisted
+decay_factor = 0.99 # after each move, eps *= decay_factor
 A = -0.51
 B = 0.76
 C = -0.36
